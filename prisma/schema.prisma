@@ -1,0 +1,113 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider     = "prisma-client"
+  output       = "../generated/prisma"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum Gender {
+  MALE
+  FEMALE
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  role         Role     @default(USER)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  refreshTokens RefreshToken[]
+
+  @@map("users")
+}
+
+model RefreshToken {
+  id        String    @id @default(uuid())
+  tokenHash String    @unique
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+  @@map("refresh_tokens")
+}
+
+/// طلب عرض سعر - يمكن لأي زائر تقديمه دون الحاجة لحساب
+model QuoteRequest {
+  id        String   @id @default(uuid())
+  name      String
+  phone     String
+  location  String
+  length    Float
+  width     Float
+  imagePath String
+  createdAt DateTime @default(now())
+
+  representativeId String?
+  representative    Representative? @relation(fields: [representativeId], references: [id])
+
+  @@index([representativeId])
+  @@map("quote_requests")
+}
+
+/// كن مندوبنا - يمكن لأي شخص التقدم بهذا الطلب ليصبح مندوباً
+model Representative {
+  id             String   @id @default(uuid())
+  name           String
+  lineage        String
+  fatherName     String
+  motherName     String
+  birthPlace     String
+  birthDate      DateTime
+  nationalId     String   @unique
+  gender         Gender
+  address        String
+  phone          String
+  shamCashWallet String?
+  createdAt      DateTime @default(now())
+
+  quoteRequests QuoteRequest[]
+
+  @@map("representatives")
+}
+
+/// مشاريعنا - يديفها الأدمن فقط، ويشوفها أي زائر
+model Project {
+  id          String   @id @default(uuid())
+  imagePath   String
+  videoPath   String
+  description String
+  createdAt   DateTime @default(now())
+
+  @@map("projects")
+}
+
+/// طلب صيانة - يمكن لأي زائر تقديمه دون الحاجة لحساب
+model MaintenanceRequest {
+  id        String   @id @default(uuid())
+  name      String
+  phone     String
+  address   String
+  imagePath String
+  problem   String
+  createdAt DateTime @default(now())
+
+  @@map("maintenance_requests")
+}

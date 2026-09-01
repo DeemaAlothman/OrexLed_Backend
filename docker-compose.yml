@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: orexled-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: orexled
+      POSTGRES_PASSWORD: orexled
+      POSTGRES_DB: orexled
+    ports:
+      - "5433:5432"
+    volumes:
+      - orexled_postgres_data:/var/lib/postgresql/data
+
+volumes:
+  orexled_postgres_data:

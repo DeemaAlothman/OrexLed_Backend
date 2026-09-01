@@ -1,0 +1,37 @@
+# compiled output
+/dist
+/generated/prisma
+
+# user uploads
+/uploads
+
+# dependencies
+/node_modules
+
+# env
+.env
+.env.*.local
+
+# logs
+logs
+*.log
+npm-debug.log*
+
+# IDE
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.idea
+
+# OS
+.DS_Store
+
+# tests
+/coverage
+/.nyc_output
+
+# temp
+tmp
+temp
