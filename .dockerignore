@@ -1,0 +1,14 @@
+node_modules
+dist
+generated
+uploads
+.env
+.env.*.local
+.git
+.vscode
+.idea
+coverage
+npm-debug.log*
+*.log
+docs
+README.md
