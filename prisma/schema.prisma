@@ -21,6 +21,32 @@ enum Gender {
   FEMALE
 }
 
+enum VideoStyle {
+  REALISTIC
+  CINEMATIC
+  ANIMATED
+  MINIMAL
+}
+
+enum VideoAspectRatio {
+  LANDSCAPE
+  PORTRAIT
+}
+
+enum VideoGenerationStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+enum VideoCreditTransactionType {
+  INITIAL_GRANT
+  ADMIN_TOPUP
+  GENERATION_SPEND
+  GENERATION_REFUND
+}
+
 model User {
   id           String   @id @default(uuid())
   email        String   @unique
@@ -28,10 +54,14 @@ model User {
   name         String
   role         Role     @default(USER)
   isActive     Boolean  @default(true)
+  videoCredits Int      @default(3)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  refreshTokens RefreshToken[]
+  refreshTokens           RefreshToken[]
+  videoGenerations        VideoGeneration[]
+  videoCreditTransactions VideoCreditTransaction[] @relation("VideoCreditOwner")
+  performedCreditTopUps   VideoCreditTransaction[] @relation("VideoCreditActor")
 
   @@map("users")
 }
@@ -110,4 +140,48 @@ model MaintenanceRequest {
   createdAt DateTime @default(now())
 
   @@map("maintenance_requests")
+}
+
+/// توليد فيديو بالذكاء الاصطناعي (Veo) لشاشات إعلامية - يتطلب حساب
+model VideoGeneration {
+  id           String                @id @default(uuid())
+  userId       String
+  user         User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title        String
+  prompt       String
+  style        VideoStyle?
+  aspectRatio  VideoAspectRatio      @default(LANDSCAPE)
+  imagePath    String?
+  status       VideoGenerationStatus @default(PENDING)
+  videoPath    String?
+  errorMessage String?
+  createdAt    DateTime              @default(now())
+  updatedAt    DateTime              @updatedAt
+
+  creditTransactions VideoCreditTransaction[]
+
+  @@index([userId])
+  @@map("video_generations")
+}
+
+/// سجل حركات رصيد الفيديو (منح أولي، شحن أدمن، استهلاك، استرجاع) - للتدقيق الكامل
+model VideoCreditTransaction {
+  id     String                     @id @default(uuid())
+  userId String
+  user   User                       @relation("VideoCreditOwner", fields: [userId], references: [id], onDelete: Cascade)
+  type   VideoCreditTransactionType
+  /// موجب للمنح/الشحن/الاسترجاع، سالب للاستهلاك
+  amount       Int
+  balanceAfter Int
+
+  videoGenerationId String?
+  videoGeneration   VideoGeneration? @relation(fields: [videoGenerationId], references: [id], onDelete: SetNull)
+
+  performedByUserId String?
+  performedBy       User?    @relation("VideoCreditActor", fields: [performedByUserId], references: [id], onDelete: SetNull)
+  note              String?
+  createdAt         DateTime @default(now())
+
+  @@index([userId])
+  @@map("video_credit_transactions")
 }

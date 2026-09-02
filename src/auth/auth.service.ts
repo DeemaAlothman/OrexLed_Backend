@@ -53,7 +53,10 @@ export class AuthService {
       throw new UnauthorizedException('Invalid email or password');
     }
 
-    const passwordMatches = await bcrypt.compare(dto.password, user.passwordHash);
+    const passwordMatches = await bcrypt.compare(
+      dto.password,
+      user.passwordHash,
+    );
     if (!passwordMatches) {
       throw new UnauthorizedException('Invalid email or password');
     }
@@ -66,7 +69,9 @@ export class AuthService {
       { sub: user.id, email: user.email, role: user.role },
       {
         secret: this.configService.get<string>('JWT_ACCESS_SECRET'),
-        expiresIn: this.configService.get<string>('JWT_ACCESS_EXPIRES_IN') as StringValue,
+        expiresIn: this.configService.get<string>(
+          'JWT_ACCESS_EXPIRES_IN',
+        ) as StringValue,
       },
     );
 
@@ -85,7 +90,9 @@ export class AuthService {
   }
 
   /** Validates the presented refresh token, revokes it, and issues a new pair (rotation). */
-  async rotateRefreshToken(presentedToken: string): Promise<TokenPair & { user: AuthenticatedUser }> {
+  async rotateRefreshToken(
+    presentedToken: string,
+  ): Promise<TokenPair & { user: AuthenticatedUser }> {
     const tokenHash = this.hashToken(presentedToken);
     const stored = await this.prisma.refreshToken.findUnique({
       where: { tokenHash },
@@ -136,10 +143,14 @@ export class AuthService {
   private parseDurationToMs(value: string): number {
     const match = /^(\d+)([smhd])$/.exec(value.trim());
     if (!match) {
-      throw new Error(`Invalid duration format: "${value}". Use e.g. "15m", "7d".`);
+      throw new Error(
+        `Invalid duration format: "${value}". Use e.g. "15m", "7d".`,
+      );
     }
     const amount = Number(match[1]);
-    const unitMs = { s: 1000, m: 60_000, h: 3_600_000, d: 86_400_000 }[match[2]]!;
+    const unitMs = { s: 1000, m: 60_000, h: 3_600_000, d: 86_400_000 }[
+      match[2]
+    ]!;
     return amount * unitMs;
   }
 }

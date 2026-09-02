@@ -7,6 +7,7 @@ import { QuoteRequestsModule } from './quote-requests/quote-requests.module';
 import { RepresentativesModule } from './representatives/representatives.module';
 import { ProjectsModule } from './projects/projects.module';
 import { MaintenanceRequestsModule } from './maintenance-requests/maintenance-requests.module';
+import { VideoGenerationsModule } from './video-generations/video-generations.module';
 import { validateEnv } from './config/env.validation';
 import { AppController } from './app.controller';
 
@@ -23,6 +24,7 @@ import { AppController } from './app.controller';
     QuoteRequestsModule,
     ProjectsModule,
     MaintenanceRequestsModule,
+    VideoGenerationsModule,
   ],
   controllers: [AppController],
 })

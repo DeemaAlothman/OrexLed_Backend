@@ -1,5 +1,14 @@
 import { plainToInstance } from 'class-transformer';
-import { IsIn, IsInt, IsNotEmpty, IsString, Max, Min, validateSync } from 'class-validator';
+import {
+  IsIn,
+  IsInt,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  Max,
+  Min,
+  validateSync,
+} from 'class-validator';
 
 class EnvironmentVariables {
   @IsIn(['development', 'production', 'test'])
@@ -38,6 +47,12 @@ class EnvironmentVariables {
   @Min(4)
   @Max(15)
   BCRYPT_SALT_ROUNDS: number;
+
+  /** Optional: without it, /video-generations accepts jobs but fails them with a clear "not configured" error. */
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  GEMINI_API_KEY?: string;
 }
 
 export function validateEnv(config: Record<string, unknown>) {
