@@ -5,7 +5,10 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  Param,
+  Patch,
   Post,
+  Query,
   UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';
@@ -16,6 +19,8 @@ import { extname, join } from 'path';
 import { mkdirSync } from 'fs';
 import { MaintenanceRequestsService } from './maintenance-requests.service';
 import { CreateMaintenanceRequestDto } from './dto/create-maintenance-request.dto';
+import { FindMaintenanceRequestsQueryDto } from './dto/find-maintenance-requests-query.dto';
+import { UpdateMaintenanceRequestDto } from './dto/update-maintenance-request.dto';
 import { Public } from '../common/decorators/public.decorator';
 import { Roles } from '../common/decorators/roles.decorator';
 import { Role } from '../../generated/prisma/client';
@@ -74,7 +79,13 @@ export class MaintenanceRequestsController {
 
   @Roles(Role.ADMIN)
   @Get()
-  findAll() {
-    return this.maintenanceRequestsService.findAll();
+  findAll(@Query() query: FindMaintenanceRequestsQueryDto) {
+    return this.maintenanceRequestsService.findAll(query);
+  }
+
+  @Roles(Role.ADMIN)
+  @Patch(':id')
+  update(@Param('id') id: string, @Body() dto: UpdateMaintenanceRequestDto) {
+    return this.maintenanceRequestsService.update(id, dto);
   }
 }

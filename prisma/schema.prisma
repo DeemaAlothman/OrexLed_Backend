@@ -47,6 +47,27 @@ enum VideoCreditTransactionType {
   GENERATION_REFUND
 }
 
+enum QuoteRequestStatus {
+  NEW
+  CONTACTED
+  QUOTED
+  WON
+  LOST
+}
+
+enum MaintenanceRequestStatus {
+  NEW
+  SCHEDULED
+  DONE
+  CANCELLED
+}
+
+enum RepresentativeStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 model User {
   id           String   @id @default(uuid())
   email        String   @unique
@@ -81,40 +102,48 @@ model RefreshToken {
 
 /// طلب عرض سعر - يمكن لأي زائر تقديمه دون الحاجة لحساب
 model QuoteRequest {
-  id        String   @id @default(uuid())
-  name      String
-  phone     String
-  location  String
-  length    Float
-  width     Float
-  imagePath String
-  createdAt DateTime @default(now())
+  id          String             @id @default(uuid())
+  name        String
+  phone       String
+  location    String
+  length      Float
+  width       Float
+  imagePath   String
+  status      QuoteRequestStatus @default(NEW)
+  note        String?
+  quotedPrice Float?
+  createdAt   DateTime           @default(now())
 
   representativeId String?
   representative    Representative? @relation(fields: [representativeId], references: [id])
+  commission        Commission?
 
   @@index([representativeId])
+  @@index([status])
   @@map("quote_requests")
 }
 
 /// كن مندوبنا - يمكن لأي شخص التقدم بهذا الطلب ليصبح مندوباً
 model Representative {
-  id             String   @id @default(uuid())
+  id             String                @id @default(uuid())
   name           String
   lineage        String
   fatherName     String
   motherName     String
   birthPlace     String
   birthDate      DateTime
-  nationalId     String   @unique
+  nationalId     String                @unique
   gender         Gender
   address        String
   phone          String
   shamCashWallet String?
-  createdAt      DateTime @default(now())
+  status         RepresentativeStatus  @default(APPROVED)
+  createdAt      DateTime              @default(now())
 
   quoteRequests QuoteRequest[]
+  commissions   Commission[]
 
+  @@index([status])
   @@map("representatives")
 }
 
@@ -131,15 +160,39 @@ model Project {
 
 /// طلب صيانة - يمكن لأي زائر تقديمه دون الحاجة لحساب
 model MaintenanceRequest {
-  id        String   @id @default(uuid())
-  name      String
-  phone     String
-  address   String
-  imagePath String
-  problem   String
-  createdAt DateTime @default(now())
+  id         String                    @id @default(uuid())
+  name       String
+  phone      String
+  address    String
+  imagePath  String
+  problem    String
+  status     MaintenanceRequestStatus  @default(NEW)
+  note       String?
+  assignedTo String?
+  createdAt  DateTime                  @default(now())
 
+  @@index([status])
   @@map("maintenance_requests")
+}
+
+/// عمولة مندوب عن طلب عرض سعر تحوّل لصفقة رابحة (WON)
+model Commission {
+  id               String    @id @default(uuid())
+  quoteRequestId   String    @unique
+  quoteRequest     QuoteRequest    @relation(fields: [quoteRequestId], references: [id])
+  representativeId String
+  representative   Representative  @relation(fields: [representativeId], references: [id])
+  dealValue        Float?
+  amount           Float?
+  paid             Boolean   @default(false)
+  paidAt           DateTime?
+  note             String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@index([representativeId])
+  @@index([paid])
+  @@map("commissions")
 }
 
 /// توليد فيديو بالذكاء الاصطناعي (Veo) لشاشات إعلامية - يتطلب حساب

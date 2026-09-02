@@ -8,6 +8,8 @@ import { RepresentativesModule } from './representatives/representatives.module'
 import { ProjectsModule } from './projects/projects.module';
 import { MaintenanceRequestsModule } from './maintenance-requests/maintenance-requests.module';
 import { VideoGenerationsModule } from './video-generations/video-generations.module';
+import { CommissionsModule } from './commissions/commissions.module';
+import { StatsModule } from './stats/stats.module';
 import { validateEnv } from './config/env.validation';
 import { AppController } from './app.controller';
 
@@ -25,6 +27,8 @@ import { AppController } from './app.controller';
     ProjectsModule,
     MaintenanceRequestsModule,
     VideoGenerationsModule,
+    CommissionsModule,
+    StatsModule,
   ],
   controllers: [AppController],
 })

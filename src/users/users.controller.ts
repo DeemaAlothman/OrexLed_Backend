@@ -1,7 +1,9 @@
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { VideoCreditsService } from './video-credits.service';
 import { TopUpCreditsDto } from './dto/top-up-credits.dto';
+import { FindUsersQueryDto } from './dto/find-users-query.dto';
+import { UpdateUserRoleDto } from './dto/update-user-role.dto';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { Roles } from '../common/decorators/roles.decorator';
 import { Role } from '../../generated/prisma/client';
@@ -16,8 +18,14 @@ export class UsersController {
 
   @Roles(Role.ADMIN)
   @Get()
-  findAll() {
-    return this.usersService.findAll();
+  findAll(@Query() query: FindUsersQueryDto) {
+    return this.usersService.findAll(query);
+  }
+
+  @Roles(Role.ADMIN)
+  @Patch(':id/role')
+  updateRole(@Param('id') id: string, @Body() dto: UpdateUserRoleDto) {
+    return this.usersService.updateRole(id, dto.role);
   }
 
   @Get('me')

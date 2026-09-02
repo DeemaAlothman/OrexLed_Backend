@@ -1,7 +1,19 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { VideoCreditsService } from './video-credits.service';
+import { FindUsersQueryDto } from './dto/find-users-query.dto';
+import { buildPaginationMeta } from '../common/utils/paginate';
 import { Role } from '../../generated/prisma/client';
+
+const USER_SAFE_SELECT = {
+  id: true,
+  email: true,
+  name: true,
+  role: true,
+  isActive: true,
+  videoCredits: true,
+  createdAt: true,
+} as const;
 
 @Injectable()
 export class UsersService {
@@ -23,15 +35,7 @@ export class UsersService {
   findByIdSafe(id: string) {
     return this.prisma.user.findUnique({
       where: { id },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        role: true,
-        isActive: true,
-        videoCredits: true,
-        createdAt: true,
-      },
+      select: USER_SAFE_SELECT,
     });
   }
 
@@ -55,18 +59,33 @@ export class UsersService {
     });
   }
 
-  findAll() {
-    return this.prisma.user.findMany({
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        role: true,
-        isActive: true,
-        videoCredits: true,
-        createdAt: true,
-      },
-      orderBy: { createdAt: 'desc' },
+  async findAll(query: FindUsersQueryDto) {
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 20;
+
+    const [data, total] = await Promise.all([
+      this.prisma.user.findMany({
+        select: USER_SAFE_SELECT,
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      this.prisma.user.count(),
+    ]);
+
+    return { data, meta: buildPaginationMeta(total, page, limit) };
+  }
+
+  async updateRole(id: string, role: Role) {
+    const existing = await this.prisma.user.findUnique({ where: { id } });
+    if (!existing) {
+      throw new NotFoundException('User not found');
+    }
+
+    return this.prisma.user.update({
+      where: { id },
+      data: { role },
+      select: USER_SAFE_SELECT,
     });
   }
 }

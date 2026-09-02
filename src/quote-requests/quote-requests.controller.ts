@@ -5,7 +5,10 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  Param,
+  Patch,
   Post,
+  Query,
   UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';
@@ -16,6 +19,8 @@ import { extname, join } from 'path';
 import { mkdirSync } from 'fs';
 import { QuoteRequestsService } from './quote-requests.service';
 import { CreateQuoteRequestDto } from './dto/create-quote-request.dto';
+import { FindQuoteRequestsQueryDto } from './dto/find-quote-requests-query.dto';
+import { UpdateQuoteRequestDto } from './dto/update-quote-request.dto';
 import { Public } from '../common/decorators/public.decorator';
 import { Roles } from '../common/decorators/roles.decorator';
 import { Role } from '../../generated/prisma/client';
@@ -72,7 +77,13 @@ export class QuoteRequestsController {
 
   @Roles(Role.ADMIN)
   @Get()
-  findAll() {
-    return this.quoteRequestsService.findAll();
+  findAll(@Query() query: FindQuoteRequestsQueryDto) {
+    return this.quoteRequestsService.findAll(query);
+  }
+
+  @Roles(Role.ADMIN)
+  @Patch(':id')
+  update(@Param('id') id: string, @Body() dto: UpdateQuoteRequestDto) {
+    return this.quoteRequestsService.update(id, dto);
   }
 }
