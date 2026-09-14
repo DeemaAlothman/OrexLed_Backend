@@ -1,8 +1,10 @@
-import { IsEmail, IsString, MinLength } from 'class-validator';
+import { IsString, MinLength } from 'class-validator';
 
 export class LoginDto {
-  @IsEmail()
-  email: string;
+  /** A phone number (new accounts) or an email address (legacy accounts registered before the phone switch). */
+  @IsString()
+  @MinLength(3)
+  identifier: string;
 
   @IsString()
   @MinLength(1)

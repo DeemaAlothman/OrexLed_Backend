@@ -10,6 +10,19 @@ import { VideoAspectRatio } from '../../generated/prisma/client';
 
 const VEO_MODEL = 'veo-3.1-generate-preview';
 const POLL_INTERVAL_MS = 10_000;
+/** Google's hard limit for this model — verified: 15s is rejected with "must be between 4 and 8". */
+const MAX_DURATION_SECONDS = 8;
+
+/**
+ * Prepended (in English — Veo follows English instructions more reliably) to every prompt so any
+ * on-screen Arabic text comes out legible instead of garbled, which is a common failure mode for
+ * video models rendering non-Latin scripts. Not a 100% guarantee, just the best mitigation available.
+ */
+const ARABIC_TEXT_QUALITY_INSTRUCTION =
+  'If this video includes any on-screen text, captions, or signage, render it in clear, ' +
+  'grammatically correct, properly shaped Modern Standard Arabic script (right-to-left, correctly ' +
+  'connected letters), with no garbled, mirrored, or nonsensical characters. If accurate Arabic text ' +
+  'cannot be rendered reliably, prefer no text over incorrect text.\n\n';
 
 interface GenerateVideoInput {
   prompt: string;
@@ -53,12 +66,13 @@ export class VeoService {
 
     let operation = await ai.models.generateVideos({
       model: VEO_MODEL,
-      prompt: input.prompt,
+      prompt: ARABIC_TEXT_QUALITY_INSTRUCTION + input.prompt,
       image,
       config: {
         aspectRatio:
           input.aspectRatio === VideoAspectRatio.PORTRAIT ? '9:16' : '16:9',
         numberOfVideos: 1,
+        durationSeconds: MAX_DURATION_SECONDS,
       },
     });
 

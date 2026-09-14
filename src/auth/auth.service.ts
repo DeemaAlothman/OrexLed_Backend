@@ -30,27 +30,39 @@ export class AuthService {
   ) {}
 
   async register(dto: RegisterDto): Promise<AuthenticatedUser> {
-    const existing = await this.usersService.findByEmail(dto.email);
+    const existing = await this.usersService.findByPhone(dto.phone);
     if (existing) {
-      throw new ConflictException('An account with this email already exists');
+      throw new ConflictException(
+        'An account with this phone number already exists',
+      );
     }
 
     const saltRounds = this.configService.get<number>('BCRYPT_SALT_ROUNDS')!;
     const passwordHash = await bcrypt.hash(dto.password, saltRounds);
 
     const user = await this.usersService.create({
-      email: dto.email,
+      phone: dto.phone,
       name: dto.name,
       passwordHash,
     });
 
-    return { id: user.id, email: user.email, role: user.role };
+    return {
+      id: user.id,
+      email: user.email,
+      phone: user.phone,
+      role: user.role,
+    };
   }
 
+  /** identifier is a phone number for new accounts, or an email for legacy accounts registered before the phone switch. */
   async validateCredentials(dto: LoginDto): Promise<AuthenticatedUser> {
-    const user = await this.usersService.findByEmail(dto.email);
+    const identifier = dto.identifier.trim();
+    const user = identifier.includes('@')
+      ? await this.usersService.findByEmail(identifier)
+      : await this.usersService.findByPhone(identifier);
+
     if (!user || !user.isActive) {
-      throw new UnauthorizedException('Invalid email or password');
+      throw new UnauthorizedException('Invalid credentials');
     }
 
     const passwordMatches = await bcrypt.compare(
@@ -58,15 +70,20 @@ export class AuthService {
       user.passwordHash,
     );
     if (!passwordMatches) {
-      throw new UnauthorizedException('Invalid email or password');
+      throw new UnauthorizedException('Invalid credentials');
     }
 
-    return { id: user.id, email: user.email, role: user.role };
+    return {
+      id: user.id,
+      email: user.email,
+      phone: user.phone,
+      role: user.role,
+    };
   }
 
   async issueTokenPair(user: AuthenticatedUser): Promise<TokenPair> {
     const accessToken = await this.jwtService.signAsync(
-      { sub: user.id, email: user.email, role: user.role },
+      { sub: user.id, email: user.email, phone: user.phone, role: user.role },
       {
         secret: this.configService.get<string>('JWT_ACCESS_SECRET'),
         expiresIn: this.configService.get<string>(
@@ -115,6 +132,7 @@ export class AuthService {
     const user: AuthenticatedUser = {
       id: stored.user.id,
       email: stored.user.email,
+      phone: stored.user.phone,
       role: stored.user.role,
     };
     const pair = await this.issueTokenPair(user);

@@ -7,11 +7,15 @@ import { AuthenticatedUser } from '../types/authenticated-user.type';
 
 interface AccessTokenPayload {
   sub: string;
-  email: string;
+  email: string | null;
+  phone: string | null;
 }
 
 @Injectable()
-export class JwtAccessStrategy extends PassportStrategy(Strategy, 'jwt-access') {
+export class JwtAccessStrategy extends PassportStrategy(
+  Strategy,
+  'jwt-access',
+) {
   constructor(
     configService: ConfigService,
     private readonly usersService: UsersService,
@@ -30,6 +34,11 @@ export class JwtAccessStrategy extends PassportStrategy(Strategy, 'jwt-access') 
       throw new UnauthorizedException('User no longer exists or is inactive');
     }
 
-    return { id: user.id, email: user.email, role: user.role };
+    return {
+      id: user.id,
+      email: user.email,
+      phone: user.phone,
+      role: user.role,
+    };
   }
 }

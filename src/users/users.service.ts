@@ -8,6 +8,7 @@ import { Role } from '../../generated/prisma/client';
 const USER_SAFE_SELECT = {
   id: true,
   email: true,
+  phone: true,
   name: true,
   role: true,
   isActive: true,
@@ -28,6 +29,10 @@ export class UsersService {
     });
   }
 
+  findByPhone(phone: string) {
+    return this.prisma.user.findUnique({ where: { phone } });
+  }
+
   findById(id: string) {
     return this.prisma.user.findUnique({ where: { id } });
   }
@@ -40,7 +45,7 @@ export class UsersService {
   }
 
   create(data: {
-    email: string;
+    phone: string;
     name: string;
     passwordHash: string;
     role?: Role;
@@ -48,7 +53,7 @@ export class UsersService {
     return this.prisma.$transaction(async (tx) => {
       const user = await tx.user.create({
         data: {
-          email: data.email.toLowerCase(),
+          phone: data.phone,
           name: data.name,
           passwordHash: data.passwordHash,
           role: data.role ?? Role.USER,

@@ -70,7 +70,9 @@ enum RepresentativeStatus {
 
 model User {
   id           String   @id @default(uuid())
-  email        String   @unique
+  /// اختياري الآن للحفاظ على الحسابات القديمة — التسجيل الجديد بيستخدم phone
+  email        String?  @unique
+  phone        String?  @unique
   passwordHash String
   name         String
   role         Role     @default(USER)

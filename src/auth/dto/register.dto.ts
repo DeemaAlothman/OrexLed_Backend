@@ -1,8 +1,9 @@
-import { IsEmail, IsString, MaxLength, MinLength } from 'class-validator';
+import { IsString, Matches, MaxLength, MinLength } from 'class-validator';
 
 export class RegisterDto {
-  @IsEmail()
-  email: string;
+  @IsString()
+  @Matches(/^\+?[0-9]{7,15}$/, { message: 'Invalid mobile number' })
+  phone: string;
 
   @IsString()
   @MinLength(8, { message: 'Password must be at least 8 characters long' })

@@ -7,6 +7,7 @@ import {
   HttpStatus,
   Param,
   Post,
+  Res,
   UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';
@@ -15,10 +16,11 @@ import { diskStorage } from 'multer';
 import { randomUUID } from 'crypto';
 import { extname, join } from 'path';
 import { mkdirSync } from 'fs';
+import type { Response } from 'express';
 import { VideoGenerationsService } from './video-generations.service';
 import { CreateVideoGenerationDto } from './dto/create-video-generation.dto';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
-import { Role } from '../../generated/prisma/client';
+import { Role, VideoGenerationStatus } from '../../generated/prisma/client';
 import type { AuthenticatedUser } from '../auth/types/authenticated-user.type';
 
 const UPLOAD_DIR = join(
@@ -81,5 +83,26 @@ export class VideoGenerationsController {
       user.id,
       user.role === Role.ADMIN,
     );
+  }
+
+  @Get(':id/download')
+  async download(
+    @Param('id') id: string,
+    @CurrentUser() user: AuthenticatedUser,
+    @Res() res: Response,
+  ) {
+    const job = await this.videoGenerationsService.findByIdForUser(
+      id,
+      user.id,
+      user.role === Role.ADMIN,
+    );
+
+    if (job.status !== VideoGenerationStatus.COMPLETED || !job.videoPath) {
+      throw new BadRequestException('This video is not ready yet');
+    }
+
+    const absolutePath = join(process.cwd(), job.videoPath);
+    const downloadName = `${job.title.replace(/[^\p{L}\p{N}\s-]/gu, '').trim() || 'video'}.mp4`;
+    res.download(absolutePath, downloadName);
   }
 }
